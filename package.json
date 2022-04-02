@@ -6,7 +6,7 @@
     "start": "parcel",
     "build": "parcel build",
     "prebuild": "shx rm -rf dist/*",
-    "build-dev": "parcel build ./src/index.html --no-optimize --public-url ./",
+    "build-dev": "parcel build ./src/index.html --no-optimize --public-url ./infinite-loop",
     "push-gh-pages": "push-dir --dir=dist --branch=main --cleanup --verbose"
   },
   "devDependencies": {
