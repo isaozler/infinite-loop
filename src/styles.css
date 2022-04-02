@@ -1,7 +1,7 @@
 svg {
-  width: 100%;
   background: #f3f3f3;
   margin: 0 auto;
+  width: 100%;
 }
 
 svg .arc {
@@ -9,12 +9,10 @@ svg .arc {
 }
 
 svg .arc:hover {
-  stroke: #000;
-  stroke-width: 3px;
+  stroke: black;
+  stroke-width: 3;
 }
 
 svg .images {
   fill: red;
 }
-
-/*# sourceMappingURL=index.4d663569.css.map */
