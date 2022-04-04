@@ -4,9 +4,8 @@
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "scripts": {
     "start": "parcel",
-    "build": "parcel build",
     "prebuild": "shx rm -rf dist/*",
-    "build-dev": "parcel build ./src/index.html --no-optimize --public-url .",
+    "build": "parcel build ./src/index.html --no-optimize --public-url .",
     "push-gh-pages": "push-dir --dir=dist --branch=main --cleanup --verbose"
   },
   "devDependencies": {
