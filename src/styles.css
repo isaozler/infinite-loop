@@ -1,18 +1,53 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  font-style: normal;
+  font-family: sans-serif;
+}
+
+.toolbar {
+  background: #0b3544;
+  margin: 0;
+  padding: 10px 4px;
+}
+
+label {
+  display: inline-block;
+  margin: 0 0 0 10px;
+  color: white;
+}
+
 svg {
-  background: #f3f3f3;
+  background: #014F6B;
   margin: 0 auto;
   width: 100%;
 }
 
-svg .arc {
+svg .slice {
   cursor: pointer;
 }
 
-svg .arc:hover {
-  stroke: black;
-  stroke-width: 3;
+svg .slice .div-notification {
+  fill: #E3695A;
 }
 
-svg .images {
-  fill: red;
+svg .div-icon body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+svg .div-icon body i {
+  font-size: 2rem;
+  color: #00374E;
+  transition: all 400ms cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+svg .slice.active .div-icon body i {
+  color: inherit;
+  font-size: 3rem;
 }

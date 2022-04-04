@@ -1,9 +1,8 @@
-import { select, arc, easeElasticOut } from 'd3'
-import type { Selection } from 'd3-selection'
+import { select, arc, easeElasticOut, symbol, symbolTriangle } from 'd3'
+import type { Select, TAnimationOptions, TArcClickHandler } from './types'
+
 import data from './data.json'
 import colors from './colors.json'
-
-type Select = Selection<any, any, any, any> | undefined
 
 let svg: Select;
 let t = 0;
@@ -26,7 +25,8 @@ const config = {
   size: +params.size || 6,
   outerRadius: +params.radius || 150,
   arcWidth: +params.width || 20,
-  arcTransitionDelay: 100,
+  arcGrowSize: +params.grow || 14,
+  arcTransitionDelay: +params.duration || 100,
   arcTweenTransitionDuration: 2000,
   colors,
 } as {
@@ -37,6 +37,7 @@ const config = {
   size: number
   outerRadius: number
   arcWidth: number
+  arcGrowSize: number
   arcTransitionDelay: number
   arcTweenTransitionDuration: number
   colors: {
@@ -95,6 +96,7 @@ function initMainGroup() {
 function appendArc(values: unknown, index: number) {
   const { half, element } = values as { half: number; element: Select }
   const div = Math.PI * 2 / config.size
+  const isTransitionSlice = half === 3 && index === (config.size / 2) - 1
   const startAngle = index === 0 ? 0 : ((index) * div)
   const endAngle = (index + 1) * div
   const angleOffset = half < 3 ? -(config.size / 2) * (div / 2) : (config.size / 2) * (div / 2)
@@ -105,70 +107,138 @@ function appendArc(values: unknown, index: number) {
     .startAngle(startAngle + angleOffset)
     .endAngle(endAngle + angleOffset)
 
-  const path = element
+  const slice = element?.append('g').classed('slice', true)
+  slice
+    ?.attr('data-is-transition-slice', isTransitionSlice)
+    .on('click', function (e) {
+      arcSelectHandler.apply(this, [e, { innerRadius, startAngle, angleOffset, endAngle, half }])
+    })
+  slice
     ?.append('path')
     .classed('arc', true)
     .attr('d', arcShape)
     .attr('data-json', `${JSON.stringify(data[t] || {})}`)
+    .attr('data-is-reversed', half === 3 || half === 1)
     .attr('data-sa', `${startAngle + angleOffset}`)
     .attr('data-ea', `${endAngle + angleOffset}`)
     .attr('fill', config.colors[half][index])
     .style('opacity', 0)
-    .style('transform', 'scale(1.2)')
-    .on('click', function () {
-      const isActive = select(this).classed('active')
-      const _innerRadius = (isActive ? 0 : 20) + innerRadius
-      const _outerRadius = (isActive ? 0 : 20) + config.outerRadius
-      const _startAngle = startAngle + (!isActive ? angleOffset + 0.05 : angleOffset)
-      const _endAngle = endAngle + (!isActive ? angleOffset - 0.05 : angleOffset)
-      const data = JSON.parse(select(this).attr('data-json') || "")
 
-      resetArcs()
+  if (isTransitionSlice) {
+    slice
+      ?.append('path')
+      .classed('triangle', true)
+      .attr("transform", `translate(-${config.outerRadius - (config.arcWidth / 2)}, ${(config.arcWidth / -10) + 2})`)
+      .attr("d", symbol().type(symbolTriangle).size(config.arcWidth * 4))
+      .attr('fill', config.colors[half][index])
+      .style('opacity', 0)
+  }
 
-      select(this)
-        .classed('active', !isActive)
+  slice
+    ?.append('title')
+    .text(data[t]?.title || '')
+
+  const iconContainer = (config.arcWidth / 5) * 4
+  slice
+    ?.append('svg:foreignObject')
+    .classed('div-icon', true)
+    .attr('width', `${iconContainer}px`)
+    .attr('height', `${iconContainer}px`)
+    .style('opacity', 0)
+    .attr('transform', function (d) {
+      const [x, y] = arcShape.centroid(d)
+      return `translate(${x - (iconContainer / 2)}, ${y - (iconContainer / 2)})`
+    })
+    .append('xhtml:body')
+    .html(`<i class="las ${data[t]?.icon}"></i>`)
+
+  if (data[t]?.hasAlert) {
+    slice
+      ?.append('circle')
+      .classed('div-notification', true)
+      .attr('r', 10)
+      .attr('cx', 5)
+      .attr('cy', 5)
+      .style('opacity', 0)
+      .attr('transform', function (d) {
+        const [x, y] = arc()
+          .innerRadius(innerRadius)
+          .outerRadius((2 * config.arcWidth) + (config.outerRadius - 20))
+          .startAngle(startAngle + angleOffset)
+          .endAngle(endAngle + angleOffset).centroid(d)
+        return `translate(${x - 5}, ${y - 5})`
+      })
+  }
+
+  t++
+}
+
+function arcSelectHandler(this: SVGGElement, _: PointerEvent, options: TArcClickHandler) {
+  const { innerRadius, startAngle, angleOffset, endAngle, half } = options
+  const slice = select(this)
+  const path = slice.select('path')
+  const isActive = slice.classed('active')
+  const data = JSON.parse(path.attr('data-json') || '')
+  const isReversedOrder = half === 3 || half == 1
+
+  resetArcs()
+
+  slice?.classed('active', !isActive)
+
+  if (!isActive) {
+    path
+      .transition()
+      .ease(arcEase)
+      .duration(config.arcTweenTransitionDuration)
+      .attr('d', (d: any) => {
+        const _startAngle = isReversedOrder ? endAngle : startAngle
+        const _endAngle = isReversedOrder ? startAngle : endAngle
+        return arc()
+          .innerRadius(innerRadius)
+          .outerRadius(config.outerRadius + config.arcGrowSize)
+          .startAngle(_startAngle + angleOffset)
+          .endAngle(_endAngle + angleOffset)(d) as any
+      })
+  }
+
+  imageLeft?.attr('href', null)
+  imageRight?.attr('href', null)
+
+  if (data?.src) {
+    if (half === 3 || half === 1) {
+      imageRight?.attr('href', data.src)
+    } else {
+      imageLeft?.attr('href', data.src)
+    }
+  }
+}
+
+function resetArcs() {
+  svg
+    ?.selectAll('.slice')
+    .classed('active', false)
+    .each(function () {
+      const arcElement = select(this).select('.arc')
+      let _startAngle = +arcElement.attr('data-sa')
+      let _endAngle = +arcElement.attr('data-ea')
+      const isReversedOrder = arcElement.attr('data-is-reversed') === "true"
+      select(this).classed('active', false)
+
+      arcElement
         .transition()
         .ease(arcEase)
         .duration(config.arcTweenTransitionDuration)
         .attr('d',
-          arc()
-            .innerRadius(_innerRadius)
-            .outerRadius(_outerRadius)
-            .startAngle(_startAngle)
-            .endAngle(_endAngle) as any)
-
-      imageLeft?.attr('href', null)
-      imageRight?.attr('href', null)
-
-      if (data?.src) {
-        if (half === 3 || half === 1) {
-          imageRight?.attr('href', data.src)
-        } else {
-          imageLeft?.attr('href', data.src)
-        }
-      }
+          (d: any) => {
+            const __startAngle = isReversedOrder ? _endAngle : _startAngle
+            const __endAngle = isReversedOrder ? _startAngle : _endAngle
+            return arc()
+              .innerRadius(config.outerRadius - config.arcWidth)
+              .outerRadius(config.outerRadius)
+              .startAngle(__startAngle)
+              .endAngle(__endAngle)(d) as any
+          })
     })
-
-  path?.append('title').text(data[t++]?.title || '')
-}
-
-function resetArcs() {
-  svg?.selectAll('.arc').classed('active', false).each(function () {
-    const _startAngle = +select(this).attr('data-sa')
-    const _endAngle = +select(this).attr('data-ea')
-
-    select(this)
-      .classed('active', false)
-      .transition()
-      .ease(arcEase)
-      .duration(config.arcTweenTransitionDuration)
-      .attr('d',
-        arc()
-          .innerRadius(config.outerRadius - config.arcWidth)
-          .outerRadius(config.outerRadius)
-          .startAngle(_startAngle)
-          .endAngle(_endAngle) as any)
-  })
 }
 
 function animateGroups() {
@@ -176,29 +246,78 @@ function animateGroups() {
     svg
       ?.selectAll('.group' + half)
       .each(function () {
-        const arcs = select(this)
-          .selectAll('.arc')
+        select(this)
+          .selectAll('.slice')
           .each(function (_, i, all) {
-            select(this)
+            const arcElement = select(this).select('.arc')
+            const iconElement = select(this).select('.div-icon')
+            const circleElement = select(this).select('.div-notification')
+
+            animateIn(arcElement, { index, all, half, i, hasScaling: true })
+            animateIn(iconElement, { index, all, half, i, delay: config.arcTransitionDelay * 10 })
+            animateIn(circleElement, { index, all, half, i, delay: config.arcTransitionDelay * 10 })
+            select(this).select('.triangle')
               .transition()
               .duration(config.arcTransitionDelay * 2)
               .delay(
-                (index * (all.length * (config.arcTransitionDelay))) +
-                (
-                  (
-                    half === 3 || half == 1
-                      ? i = (all.length - 1) - i
-                      : i
-                  )
-                  * config.arcTransitionDelay
-                )
+                (index * (all.length * config.arcTransitionDelay))
+                + ((i - (config.size / 2)) * config.arcTransitionDelay)
+                + config.arcTransitionDelay
               )
               .style('opacity', 1)
-              .style('transform', 'scale(1)')
           })
       })
 
   })
+}
+
+
+function animateIn(element: Select, options: TAnimationOptions) {
+  if (!element) return
+
+  const { index, all, half, delay, hasScaling } = options
+  let { i } = options
+  const isReversedOrder = half === 3 || half == 1
+  const delayValue = (index * (all.length * (config.arcTransitionDelay))) +
+    (
+      (
+      isReversedOrder
+        ? i = (all.length - 1) - i
+        : i
+    )
+    * config.arcTransitionDelay
+  )
+
+  if (hasScaling) {
+    const startAngle = +element.attr('data-sa')
+    const endAngle = +element.attr('data-ea')
+    let _startAngle = startAngle
+    let _endAngle = endAngle
+
+    element.transition()
+      .duration(delay || config.arcTransitionDelay * 2)
+      .delay(delayValue)
+      .attrTween('d', (d: any) => {
+        return (t: number) => {
+          const diffAngle = endAngle - startAngle
+          _startAngle = isReversedOrder ? endAngle : startAngle
+          _endAngle = isReversedOrder ? endAngle - (t * diffAngle) : startAngle + (t * diffAngle)
+          return arc()
+            .innerRadius(config.outerRadius - config.arcWidth)
+            .outerRadius(config.outerRadius)
+            .startAngle(_startAngle)
+            .endAngle(_endAngle)(d) as any
+        }
+      })
+      .attr('data-sa', _startAngle)
+      .attr('data-ea', _endAngle)
+      .style('opacity', 1)
+  } else {
+    element.transition()
+      .duration(delay || config.arcTransitionDelay * 2)
+      .delay(delayValue)
+      .style('opacity', 1)
+  }
 }
 
 main()

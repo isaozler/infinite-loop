@@ -4,49 +4,44 @@
 <head>
   <meta charset="utf-8" />
   <title>Infinite Loop</title>
+  <link rel="stylesheet"
+        href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" />
+  <link rel="stylesheet"
+        href="https://maxst.icons8.com/vue-static/landings/line-awesome/font-awesome-line-awesome/css/all.min.css" />
   <link rel="stylesheet" href="styles.css" />
   <script type="module" src="app.ts"></script>
 </head>
 
 <body>
   <svg id="canvas" viewBox="0 0 800 600" width="800" height="600" xmlns="http://www.w3.org/2000/svg"></svg>
-  <select name="divs" id="divs" onchange="setChunks(this)">
-    <option>Select chunk size</option>
-    <option value="4">4 Chunks</option>
-    <option value="6">6 Chunks</option>
-    <option value="8">8 Chunks</option>
-    <option value="10">10 Chunks</option>
-    <option value="12">12 Chunks</option>
-    <option value="14">14 Chunks</option>
-  </select>
-  <input type="number" id="radius" onchange="setRadius(this)" min="150" max="250" />
-  <input type="number" id="arcWidth" onchange="setArcWidth(this)" min="20" max="100" />
+  <div class="toolbar">
+    <label>
+      Chunk Size:
+      <select name="divs" id="divs" onchange="setChunks(this)">
+        <option>Select chunk size</option>
+        <option value="4">4 Chunks</option>
+        <option value="6">6 Chunks</option>
+        <option value="8">8 Chunks</option>
+        <option value="10">10 Chunks</option>
+        <option value="12">12 Chunks</option>
+        <option value="14">14 Chunks</option>
+      </select>
+    </label>
+    <label>
+      Width:
+      <input type="number" id="radius" onchange="setRadius(this)" min="150" max="250" />
+    </label>
+    <label>
+      Stroke width:
+      <input type="number" id="arcWidth" onchange="setArcWidth(this)" min="20" max="100" />
+    </label>
+    <label>
+      Animation Duration:
+      <input type="number" id="duration" onchange="setDuration(this)" min="100" />
+    </label>
+    </div>
 
-  <script type="text/javascript">
-    const urlSearchParams = new URLSearchParams(window.location.search);
-    let activeChunkSize = urlSearchParams.get('size') || 6
-
-    document.querySelector('#divs option[value="' + activeChunkSize + '"]').setAttribute('selected', true)
-    document.querySelector('#radius').setAttribute('value', urlSearchParams.get('radius') || 150)
-    document.querySelector('#arcWidth').setAttribute('value', urlSearchParams.get('width') || 20)
-
-    setChunks = (e) => {
-      urlSearchParams.set('size', e.value)
-      window.location.replace(`?${urlSearchParams.toString()}`)
-    }
-
-    setRadius = (e) => {
-      const value = +e.value > 250 || +e.value < 150 ? 150 : +e.value
-      urlSearchParams.set('radius', value)
-      window.location.replace(`?${urlSearchParams.toString()}`)
-    }
-
-    setArcWidth = (e) => {
-      const value = +e.value > 100 || +e.value < 20 ? 20 : +e.value
-      urlSearchParams.set('width', value)
-      window.location.replace(`?${urlSearchParams.toString()}`)
-    }
-  </script>
+  <script src="main.js"></script>
 </body>
 
 </html>
