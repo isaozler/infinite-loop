@@ -1,0 +1,55 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  font-style: normal;
+}
+
+.toolbar {
+  background: #0b3544;
+  margin: 0;
+  padding: 10px 4px;
+}
+
+label {
+  color: #fff;
+  margin: 0 0 0 10px;
+  display: inline-block;
+}
+
+svg {
+  width: 100%;
+  background: #014f6b;
+  margin: 0 auto;
+}
+
+svg .slice {
+  cursor: pointer;
+}
+
+svg .slice .div-notification {
+  fill: #e3695a;
+}
+
+svg .div-icon body {
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+svg .div-icon body i {
+  color: #00374e;
+  font-size: 2rem;
+  transition: all .4s cubic-bezier(.075, .82, .165, 1);
+}
+
+svg .slice.active .div-icon body i {
+  color: inherit;
+  font-size: 3rem;
+}
+
+/*# sourceMappingURL=index.c4cd8351.css.map */
